@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Artwork {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  price       Float
+  medium      String
+  dimensions  String
+  imageUrl    String
+  isAvailable Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  inquiries  PurchaseInquiry[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model PurchaseInquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  artworkId String
+  message   String?
+  createdAt DateTime @default(now())
+
+  artwork Artwork @relation(fields: [artworkId], references: [id])
+}
