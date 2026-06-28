@@ -1,0 +1,865 @@
+     1→'use client'
+     2→
+     3→import { useEffect, useState, useRef, FormEvent, useCallback } from 'react'
+     4→import { motion, useInView, AnimatePresence } from 'framer-motion'
+     5→import { toast } from '@/hooks/use-toast'
+     6→import { Button } from '@/components/ui/button'
+     7→import { Input } from '@/components/ui/input'
+     8→import { Textarea } from '@/components/ui/textarea'
+     9→import { Label } from '@/components/ui/label'
+    10→import { Badge } from '@/components/ui/badge'
+    11→import { Separator } from '@/components/ui/separator'
+    12→import { Skeleton } from '@/components/ui/skeleton'
+    13→import {
+    14→  Dialog,
+    15→  DialogContent,
+    16→  DialogHeader,
+    17→  DialogTitle,
+    18→  DialogDescription,
+    19→  DialogFooter,
+    20→} from '@/components/ui/dialog'
+    21→import {
+    22→  Instagram,
+    23→  Mail,
+    24→  Menu,
+    25→  X,
+    26→  ShoppingBag,
+    27→  Palette,
+    28→  ChevronRight,
+    29→  Loader2,
+    30→  ArrowUp,
+    31→} from 'lucide-react'
+    32→
+    33→/* ──────────── Types ──────────── */
+    34→interface Artwork {
+    35→  id: string
+    36→  title: string
+    37→  description: string | null
+    38→  price: number
+    39→  medium: string
+    40→  dimensions: string
+    41→  imageUrl: string
+    42→  isAvailable: boolean
+    43→  sortOrder: number
+    44→}
+    45→
+    46→/* ──────────── Animation helpers ──────────── */
+    47→const fadeUp = {
+    48→  hidden: { opacity: 0, y: 30 },
+    49→  visible: (i: number) => ({
+    50→    opacity: 1,
+    51→    y: 0,
+    52→    transition: { delay: i * 0.1, duration: 0.6, ease: 'easeOut' },
+    53→  }),
+    54→}
+    55→
+    56→const stagger = {
+    57→  visible: { transition: { staggerChildren: 0.08 } },
+    58→}
+    59→
+    60→function SectionHeading({ title, subtitle, className = '' }: { title: string; subtitle?: string; className?: string }) {
+    61→  const ref = useRef<HTMLDivElement>(null)
+    62→  const inView = useInView(ref, { once: true, margin: '-80px' })
+    63→
+    64→  return (
+    65→    <motion.div
+    66→      ref={ref}
+    67→      initial="hidden"
+    68→      animate={inView ? 'visible' : 'hidden'}
+    69→      variants={stagger}
+    70→      className={`text-center mb-12 ${className}`}
+    71→    >
+    72→      <motion.h2
+    73→        variants={fadeUp}
+    74→        custom={0}
+    75→        className="text-3xl md:text-4xl font-semibold tracking-tight"
+    76→        style={{ fontFamily: 'var(--font-playfair), serif' }}
+    77→      >
+    78→        {title}
+    79→      </motion.h2>
+    80→      {subtitle && (
+    81→        <motion.p variants={fadeUp} custom={1} className="text-muted-foreground mt-3 max-w-xl mx-auto text-sm md:text-base leading-relaxed">
+    82→          {subtitle}
+    83→        </motion.p>
+    84→      )}
+    85→    </motion.div>
+    86→  )
+    87→}
+    88→
+    89→/* ──────────── Navigation ──────────── */
+    90→function Navbar({ onNavigate }: { onNavigate: (id: string) => void }) {
+    91→  const [scrolled, setScrolled] = useState(false)
+    92→  const [mobileOpen, setMobileOpen] = useState(false)
+    93→
+    94→  useEffect(() => {
+    95→    const onScroll = () => setScrolled(window.scrollY > 40)
+    96→    window.addEventListener('scroll', onScroll, { passive: true })
+    97→    return () => window.removeEventListener('scroll', onScroll)
+    98→  }, [])
+    99→
+   100→  const links = [
+   101→    { label: 'Home', id: 'hero' },
+   102→    { label: 'About', id: 'about' },
+   103→    { label: 'Gallery', id: 'gallery' },
+   104→    { label: 'Contact', id: 'contact' },
+   105→  ]
+   106→
+   107→  return (
+   108→    <nav
+   109→      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+   110→        scrolled
+   111→          ? 'bg-white/80 backdrop-blur-lg border-b shadow-sm'
+   112→          : 'bg-transparent'
+   113→      }`}
+   114→    >
+   115→      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+   116→        <button
+   117→          onClick={() => onNavigate('hero')}
+   118→          className="text-lg font-semibold tracking-wide"
+   119→          style={{ fontFamily: 'var(--font-playfair), serif' }}
+   120→        >
+   121→          Marcus Carter
+   122→        </button>
+   123→
+   124→        {/* Desktop links */}
+   125→        <div className="hidden md:flex items-center gap-8">
+   126→          {links.map((l) => (
+   127→            <button
+   128→              key={l.id}
+   129→              onClick={() => onNavigate(l.id)}
+   130→              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+   131→            >
+   132→              {l.label}
+   133→            </button>
+   134→          ))}
+   135→          <a
+   136→            href="https://instagram.com/eastvillagenyc"
+   137→            target="_blank"
+   138→            rel="noopener noreferrer"
+   139→            className="text-muted-foreground hover:text-foreground transition-colors"
+   140→            aria-label="Instagram"
+   141→          >
+   142→            <Instagram className="size-4" />
+   143→          </a>
+   144→        </div>
+   145→
+   146→        {/* Mobile toggle */}
+   147→        <button
+   148→          className="md:hidden text-foreground"
+   149→          onClick={() => setMobileOpen(!mobileOpen)}
+   150→          aria-label="Toggle menu"
+   151→        >
+   152→          {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+   153→        </button>
+   154→      </div>
+   155→
+   156→      {/* Mobile menu */}
+   157→      <AnimatePresence>
+   158→        {mobileOpen && (
+   159→          <motion.div
+   160→            initial={{ height: 0, opacity: 0 }}
+   161→            animate={{ height: 'auto', opacity: 1 }}
+   162→            exit={{ height: 0, opacity: 0 }}
+   163→            className="md:hidden bg-white border-b overflow-hidden"
+   164→          >
+   165→            <div className="flex flex-col px-6 py-4 gap-3">
+   166→              {links.map((l) => (
+   167→                <button
+   168→                  key={l.id}
+   169→                  onClick={() => {
+   170→                    onNavigate(l.id)
+   171→                    setMobileOpen(false)
+   172→                  }}
+   173→                  className="text-left text-sm text-muted-foreground hover:text-foreground py-1"
+   174→                >
+   175→                  {l.label}
+   176→                </button>
+   177→              ))}
+   178→              <a
+   179→                href="https://instagram.com/eastvillagenyc"
+   180→                target="_blank"
+   181→                rel="noopener noreferrer"
+   182→                className="text-sm text-muted-foreground hover:text-foreground py-1 flex items-center gap-2"
+   183→              >
+   184→                <Instagram className="size-4" /> @eastvillagenyc
+   185→              </a>
+   186→            </div>
+   187→          </motion.div>
+   188→        )}
+   189→      </AnimatePresence>
+   190→    </nav>
+   191→  )
+   192→}
+   193→
+   194→/* ──────────── Hero Section ──────────── */
+   195→function HeroSection({ onNavigate }: { onNavigate: (id: string) => void }) {
+   196→  return (
+   197→    <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+   198→      {/* Background image */}
+   199→      <div
+   200→        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+   201→        style={{
+   202→          backgroundImage: `url(https://images.squarespace-cdn.com/content/v1/6598bd928a7fcc2ab5804a23/58494dcd-ad36-4a16-88d7-3e94292701cb/image_123650291+%282%29.JPG?format=2500w)`,
+   203→        }}
+   204→      />
+   205→      <div className="absolute inset-0 bg-black/60" />
+   206→
+   207→      <div className="relative z-10 text-center text-white px-6 max-w-3xl mx-auto">
+   208→        <motion.p
+   209→          initial={{ opacity: 0, y: 20 }}
+   210→          animate={{ opacity: 1, y: 0 }}
+   211→          transition={{ duration: 0.8, delay: 0.2 }}
+   212→          className="text-sm md:text-base uppercase tracking-[0.3em] text-white/70 mb-4"
+   213→        >
+   214→          Abstract Artist
+   215→        </motion.p>
+   216→        <motion.h1
+   217→          initial={{ opacity: 0, y: 30 }}
+   218→          animate={{ opacity: 1, y: 0 }}
+   219→          transition={{ duration: 0.8, delay: 0.4 }}
+   220→          className="text-5xl md:text-7xl lg:text-8xl font-bold leading-none mb-6"
+   221→          style={{ fontFamily: 'var(--font-playfair), serif' }}
+   222→        >
+   223→          Marcus Carter
+   224→        </motion.h1>
+   225→        <motion.p
+   226→          initial={{ opacity: 0, y: 20 }}
+   227→          animate={{ opacity: 1, y: 0 }}
+   228→          transition={{ duration: 0.8, delay: 0.6 }}
+   229→          className="text-base md:text-lg text-white/80 max-w-xl mx-auto leading-relaxed mb-10"
+   230→        >
+   231→          Exploring life&apos;s essence through an abstract lens from New York City&apos;s East Village
+   232→        </motion.p>
+   233→        <motion.div
+   234→          initial={{ opacity: 0, y: 20 }}
+   235→          animate={{ opacity: 1, y: 0 }}
+   236→          transition={{ duration: 0.8, delay: 0.8 }}
+   237→          className="flex flex-col sm:flex-row gap-4 justify-center"
+   238→        >
+   239→          <Button
+   240→            size="lg"
+   241→            onClick={() => onNavigate('gallery')}
+   242→            className="bg-white text-black hover:bg-white/90 text-base px-8"
+   243→          >
+   244→            <Palette className="size-4 mr-2" />
+   245→            View Gallery
+   246→          </Button>
+   247→          <Button
+   248→            size="lg"
+   249→            variant="outline"
+   250→            onClick={() => onNavigate('contact')}
+   251→            className="border-white/40 text-white hover:bg-white/10 text-base px-8"
+   252→          >
+   253→            Get in Touch
+   254→          </Button>
+   255→        </motion.div>
+   256→      </div>
+   257→
+   258→      {/* Scroll indicator */}
+   259→      <motion.div
+   260→        initial={{ opacity: 0 }}
+   261→        animate={{ opacity: 1 }}
+   262→        transition={{ delay: 1.5, duration: 1 }}
+   263→        className="absolute bottom-8 left-1/2 -translate-x-1/2"
+   264→      >
+   265→        <motion.div
+   266→          animate={{ y: [0, 8, 0] }}
+   267→          transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+   268→          className="w-5 h-8 border-2 border-white/40 rounded-full flex justify-center pt-1.5"
+   269→        >
+   270→          <div className="w-1 h-1.5 bg-white/70 rounded-full" />
+   271→        </motion.div>
+   272→      </motion.div>
+   273→    </section>
+   274→  )
+   275→}
+   276→
+   277→/* ──────────── About Section ──────────── */
+   278→function AboutSection() {
+   279→  const ref = useRef<HTMLDivElement>(null)
+   280→  const inView = useInView(ref, { once: true, margin: '-80px' })
+   281→
+   282→  return (
+   283→    <section id="about" className="py-20 md:py-28 bg-white">
+   284→      <div className="max-w-6xl mx-auto px-6">
+   285→        <SectionHeading
+   286→          title="About the Artist"
+   287→          subtitle="Four decades of experience shaping abstract expression"
+   288→        />
+   289→
+   290→        <motion.div
+   291→          ref={ref}
+   292→          initial="hidden"
+   293→          animate={inView ? 'visible' : 'hidden'}
+   294→          variants={stagger}
+   295→          className="grid md:grid-cols-2 gap-12 items-start"
+   296→        >
+   297→          <motion.div variants={fadeUp} custom={0} className="space-y-5 text-muted-foreground leading-relaxed text-sm md:text-base">
+   298→            <p>
+   299→              Based in New York City&apos;s East Village, Marcus Carter creates paintings that explore life&apos;s
+   300→              essence through an abstract lens, employing a vibrant palette, symbolic imagery, and elements drawn
+   301→              from four decades of experience with diagnostic imaging and various technologies.
+   302→            </p>
+   303→            <p>
+   304→              &ldquo;My work is driven by a deep sense of empathy toward humanity and an unwavering faith that
+   305→              kindness will triumph. This conviction is mirrored in my art, as I draw inspiration from the
+   306→              masterful works of Basquiat, Beckmann, Kandinsky, Klee, de Kooning and Mir&oacute; — artists whom
+   307→              I greatly admire.&rdquo;
+   308→            </p>
+   309→            <p>
+   310→              &ldquo;I spent most of my adult life working in diagnostic imaging and aspects of that life are
+   311→              evident in some of my art — transforming the hidden structures of the human body into abstract
+   312→              landscapes of color and form.&rdquo;
+   313→            </p>
+   314→            <p>
+   315→              &ldquo;It is my aspiration to impart to the younger generation that a bright future awaits them.
+   316→              Don&apos;t hasten the journey to adulthood; rather, relish your youthful years and channel your
+   317→              energy into enhancing the world around us.&rdquo;
+   318→            </p>
+   319→          </motion.div>
+   320→
+   321→          <motion.div variants={fadeUp} custom={1} className="space-y-6">
+   322→            <blockquote className="border-l-4 border-black/10 pl-5 italic text-muted-foreground text-sm leading-relaxed">
+   323→              &ldquo;That&apos;s a profoundly moving approach to your artistry. It&apos;s clear that you channel deep
+   324→              empathy and reflection into your work, transforming the often harsh realities of human experience
+   325→              into something that can be seen, felt, and understood on a visceral level. By capturing the essence
+   326→              of those souls and their stories, you&apos;re not only creating art but also bearing witness to their
+   327→              experiences and sharing them with the world.&rdquo;
+   328→              <span className="block mt-2 text-xs font-medium text-foreground not-italic">— Collector</span>
+   329→            </blockquote>
+   330→
+   331→            <div className="grid grid-cols-3 gap-4 pt-2">
+   332→              {[
+   333→                { label: 'Location', value: 'East Village, NYC' },
+   334→                { label: 'Medium', value: 'Mixed Media' },
+   335→                { label: 'Experience', value: '40+ Years' },
+   336→              ].map((item) => (
+   337→                <div key={item.label} className="text-center">
+   338→                  <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{item.label}</p>
+   339→                  <p className="text-sm font-medium">{item.value}</p>
+   340→                </div>
+   341→              ))}
+   342→            </div>
+   343→
+   344→            <div className="flex gap-3 pt-2">
+   345→              <a
+   346→                href="mailto:marcuscarternyc@protonmail.com"
+   347→                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+   348→              >
+   349→                <Mail className="size-4" />
+   350→                marcuscarternyc@protonmail.com
+   351→              </a>
+   352→            </div>
+   353→            <a
+   354→              href="https://instagram.com/eastvillagenyc"
+   355→              target="_blank"
+   356→              rel="noopener noreferrer"
+   357→              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+   358→            >
+   359→              <Instagram className="size-4" />
+   360→              @eastvillagenyc
+   361→            </a>
+   362→          </motion.div>
+   363→        </motion.div>
+   364→      </div>
+   365→    </section>
+   366→  )
+   367→}
+   368→
+   369→/* ──────────── Gallery Section ──────────── */
+   370→function ArtworkCard({
+   371→  artwork,
+   372→  index,
+   373→  onSelect,
+   374→}: {
+   375→  artwork: Artwork
+   376→  index: number
+   377→  onSelect: (a: Artwork) => void
+   378→}) {
+   379→  const ref = useRef<HTMLDivElement>(null)
+   380→  const inView = useInView(ref, { once: true, margin: '-40px' })
+   381→
+   382→  return (
+   383→    <motion.div
+   384→      ref={ref}
+   385→      variants={fadeUp}
+   386→      custom={index % 4}
+   387→      initial="hidden"
+   388→      animate={inView ? 'visible' : 'hidden'}
+   389→      className="group cursor-pointer"
+   390→      onClick={() => onSelect(artwork)}
+   391→    >
+   392→      <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-muted mb-3">
+   393→        <img
+   394→          src={artwork.imageUrl}
+   395→          alt={artwork.title}
+   396→          className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+   397→          loading="lazy"
+   398→        />
+   399→        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+   400→          <motion.div
+   401→            initial={{ opacity: 0, scale: 0.8 }}
+   402→            whileHover={{ opacity: 1, scale: 1 }}
+   403→            className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+   404→          >
+   405→            <span className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2">
+   406→              <ShoppingBag className="size-4" />
+   407→              {artwork.isAvailable ? 'View Details' : 'Sold'}
+   408→            </span>
+   409→          </motion.div>
+   410→        </div>
+   411→        {!artwork.isAvailable && (
+   412→          <Badge variant="secondary" className="absolute top-3 left-3 bg-black/70 text-white border-0">
+   413→            Sold
+   414→          </Badge>
+   415→        )}
+   416→      </div>
+   417→      <h3
+   418→        className="font-semibold text-base mb-1 group-hover:underline underline-offset-4"
+   419→        style={{ fontFamily: 'var(--font-playfair), serif' }}
+   420→      >
+   421→        {artwork.title}
+   422→      </h3>
+   423→      <p className="text-xs text-muted-foreground">{artwork.medium} &middot; {artwork.dimensions}</p>
+   424→      {artwork.isAvailable && (
+   425→        <p className="text-sm font-medium mt-1">${artwork.price.toLocaleString()}</p>
+   426→      )}
+   427→    </motion.div>
+   428→  )
+   429→}
+   430→
+   431→function PurchaseDialog({
+   432→  artwork,
+   433→  open,
+   434→  onOpenChange,
+   435→}: {
+   436→  artwork: Artwork | null
+   437→  open: boolean
+   438→  onOpenChange: (open: boolean) => void
+   439→}) {
+   440→  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' })
+   441→  const [loading, setLoading] = useState(false)
+   442→
+   443→  const handleSubmit = async (e: FormEvent) => {
+   444→    e.preventDefault()
+   445→    if (!artwork) return
+   446→
+   447→    if (!formData.name || !formData.email) {
+   448→      toast({ title: 'Please fill in your name and email', variant: 'destructive' })
+   449→      return
+   450→    }
+   451→
+   452→    setLoading(true)
+   453→    try {
+   454→      const res = await fetch('/api/inquiry', {
+   455→        method: 'POST',
+   456→        headers: { 'Content-Type': 'application/json' },
+   457→        body: JSON.stringify({ ...formData, artworkId: artwork.id }),
+   458→      })
+   459→      const data = await res.json()
+   460→
+   461→      if (!res.ok) {
+   462→        throw new Error(data.error || 'Something went wrong')
+   463→      }
+   464→
+   465→      toast({
+   466→        title: 'Inquiry Submitted!',
+   467→        description: data.message,
+   468→      })
+   469→      setFormData({ name: '', email: '', phone: '', message: '' })
+   470→      onOpenChange(false)
+   471→    } catch (err: unknown) {
+   472→      toast({
+   473→        title: 'Error',
+   474→        description: err instanceof Error ? err.message : 'Something went wrong. Please try again.',
+   475→        variant: 'destructive',
+   476→      })
+   477→    } finally {
+   478→      setLoading(false)
+   479→    }
+   480→  }
+   481→
+   482→  useEffect(() => {
+   483→    if (open) setFormData({ name: '', email: '', phone: '', message: '' })
+   484→  }, [open])
+   485→
+   486→  if (!artwork) return null
+   487→
+   488→  return (
+   489→    <Dialog open={open} onOpenChange={onOpenChange}>
+   490→      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+   491→        <DialogHeader>
+   492→          <DialogTitle style={{ fontFamily: 'var(--font-playfair), serif' }}>
+   493→            Purchase Inquiry
+   494→          </DialogTitle>
+   495→          <DialogDescription>
+   496→            You&apos;re interested in <span className="font-medium text-foreground">{artwork.title}</span> —{' '}
+   497→            <span className="font-medium text-foreground">${artwork.price.toLocaleString()}</span>
+   498→          </DialogDescription>
+   499→        </DialogHeader>
+   500→
+   501→        <div className="rounded-lg overflow-hidden aspect-video bg-muted mb-2">
+   502→          <img
+   503→            src={artwork.imageUrl}
+   504→            alt={artwork.title}
+   505→            className="w-full h-full object-cover"
+   506→          />
+   507→        </div>
+   508→        <div className="flex gap-4 text-xs text-muted-foreground">
+   509→          <span>{artwork.medium}</span>
+   510→          <span>&middot;</span>
+   511→          <span>{artwork.dimensions}</span>
+   512→        </div>
+   513→
+   514→        <Separator className="my-2" />
+   515→
+   516→        <form onSubmit={handleSubmit} className="space-y-4">
+   517→          <div className="grid gap-2">
+   518→            <Label htmlFor="inquiry-name">Name *</Label>
+   519→            <Input
+   520→              id="inquiry-name"
+   521→              placeholder="Your full name"
+   522→              value={formData.name}
+   523→              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+   524→              required
+   525→            />
+   526→          </div>
+   527→          <div className="grid gap-2">
+   528→            <Label htmlFor="inquiry-email">Email *</Label>
+   529→            <Input
+   530→              id="inquiry-email"
+   531→              type="email"
+   532→              placeholder="you@example.com"
+   533→              value={formData.email}
+   534→              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+   535→              required
+   536→            />
+   537→          </div>
+   538→          <div className="grid gap-2">
+   539→            <Label htmlFor="inquiry-phone">Phone (optional)</Label>
+   540→            <Input
+   541→              id="inquiry-phone"
+   542→              type="tel"
+   543→              placeholder="(555) 123-4567"
+   544→              value={formData.phone}
+   545→              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+   546→            />
+   547→          </div>
+   548→          <div className="grid gap-2">
+   549→            <Label htmlFor="inquiry-message">Message (optional)</Label>
+   550→            <Textarea
+   551→              id="inquiry-message"
+   552→              placeholder="Any questions about this piece, shipping, or commissioning similar work..."
+   553→              value={formData.message}
+   554→              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+   555→              rows={3}
+   556→            />
+   557→          </div>
+   558→          <DialogFooter>
+   559→            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+   560→              Cancel
+   561→            </Button>
+   562→            <Button type="submit" disabled={loading}>
+   563→              {loading && <Loader2 className="size-4 animate-spin mr-2" />}
+   564→              Submit Inquiry
+   565→            </Button>
+   566→          </DialogFooter>
+   567→        </form>
+   568→      </DialogContent>
+   569→    </Dialog>
+   570→  )
+   571→}
+   572→
+   573→function GallerySection() {
+   574→  const [artworks, setArtworks] = useState<Artwork[]>([])
+   575→  const [loading, setLoading] = useState(true)
+   576→  const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null)
+   577→  const [dialogOpen, setDialogOpen] = useState(false)
+   578→
+   579→  useEffect(() => {
+   580→    fetch('/api/artworks')
+   581→      .then((r) => r.json())
+   582→      .then((data) => {
+   583→        setArtworks(data.artworks)
+   584→        setLoading(false)
+   585→      })
+   586→      .catch(() => setLoading(false))
+   587→  }, [])
+   588→
+   589→  return (
+   590→    <section id="gallery" className="py-20 md:py-28 bg-zinc-50">
+   591→      <div className="max-w-6xl mx-auto px-6">
+   592→        <SectionHeading
+   593→          title="Gallery"
+   594→          subtitle="Each piece is a window into the unseen — where diagnostic precision meets raw emotional expression"
+   595→        />
+   596→
+   597→        {loading ? (
+   598→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+   599→            {Array.from({ length: 8 }).map((_, i) => (
+   600→              <div key={i}>
+   601→                <Skeleton className="aspect-[4/5] rounded-lg mb-3" />
+   602→                <Skeleton className="h-4 w-2/3 mb-1" />
+   603→                <Skeleton className="h-3 w-1/2" />
+   604→              </div>
+   605→            ))}
+   606→          </div>
+   607→        ) : (
+   608→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+   609→            {artworks.map((artwork, i) => (
+   610→              <ArtworkCard
+   611→                key={artwork.id}
+   612→                artwork={artwork}
+   613→                index={i}
+   614→                onSelect={(a) => {
+   615→                  if (a.isAvailable) {
+   616→                    setSelectedArtwork(a)
+   617→                    setDialogOpen(true)
+   618→                  }
+   619→                }}
+   620→              />
+   621→            ))}
+   622→          </div>
+   623→        )}
+   624→
+   625→        <p className="text-center text-xs text-muted-foreground mt-10">
+   626→          Prices are in USD. Shipping and framing available upon request. All purchases include a certificate of authenticity.
+   627→        </p>
+   628→      </div>
+   629→
+   630→      <PurchaseDialog
+   631→        artwork={selectedArtwork}
+   632→        open={dialogOpen}
+   633→        onOpenChange={setDialogOpen}
+   634→      />
+   635→    </section>
+   636→  )
+   637→}
+   638→
+   639→/* ──────────── Contact Section ──────────── */
+   640→function ContactSection() {
+   641→  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' })
+   642→  const [loading, setLoading] = useState(false)
+   643→  const ref = useRef<HTMLDivElement>(null)
+   644→  const inView = useInView(ref, { once: true, margin: '-80px' })
+   645→
+   646→  const handleSubmit = async (e: FormEvent) => {
+   647→    e.preventDefault()
+   648→
+   649→    if (!formData.name || !formData.email || !formData.message) {
+   650→      toast({ title: 'Please fill in all required fields', variant: 'destructive' })
+   651→      return
+   652→    }
+   653→
+   654→    setLoading(true)
+   655→    try {
+   656→      const res = await fetch('/api/contact', {
+   657→        method: 'POST',
+   658→        headers: { 'Content-Type': 'application/json' },
+   659→        body: JSON.stringify(formData),
+   660→      })
+   661→      const data = await res.json()
+   662→
+   663→      if (!res.ok) throw new Error(data.error || 'Something went wrong')
+   664→
+   665→      toast({
+   666→        title: 'Message Sent!',
+   667→        description: data.message,
+   668→      })
+   669→      setFormData({ name: '', email: '', phone: '', message: '' })
+   670→    } catch (err: unknown) {
+   671→      toast({
+   672→        title: 'Error',
+   673→        description: err instanceof Error ? err.message : 'Something went wrong. Please try again.',
+   674→        variant: 'destructive',
+   675→      })
+   676→    } finally {
+   677→      setLoading(false)
+   678→    }
+   679→  }
+   680→
+   681→  return (
+   682→    <section id="contact" className="py-20 md:py-28 bg-white">
+   683→      <div className="max-w-6xl mx-auto px-6">
+   684→        <SectionHeading
+   685→          title="Get in Touch"
+   686→          subtitle="Interested in a piece, want to commission work, or just want to say hello?"
+   687→        />
+   688→
+   689→        <motion.div
+   690→          ref={ref}
+   691→          initial="hidden"
+   692→          animate={inView ? 'visible' : 'hidden'}
+   693→          variants={stagger}
+   694→          className="max-w-xl mx-auto"
+   695→        >
+   696→          <motion.form variants={fadeUp} custom={0} onSubmit={handleSubmit} className="space-y-5">
+   697→            <div className="grid sm:grid-cols-2 gap-4">
+   698→              <div className="grid gap-2">
+   699→                <Label htmlFor="contact-name">Name *</Label>
+   700→                <Input
+   701→                  id="contact-name"
+   702→                  placeholder="Your name"
+   703→                  value={formData.name}
+   704→                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+   705→                  required
+   706→                />
+   707→              </div>
+   708→              <div className="grid gap-2">
+   709→                <Label htmlFor="contact-email">Email *</Label>
+   710→                <Input
+   711→                  id="contact-email"
+   712→                  type="email"
+   713→                  placeholder="you@example.com"
+   714→                  value={formData.email}
+   715→                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+   716→                  required
+   717→                />
+   718→              </div>
+   719→            </div>
+   720→            <div className="grid gap-2">
+   721→              <Label htmlFor="contact-phone">Phone (optional)</Label>
+   722→              <Input
+   723→                id="contact-phone"
+   724→                type="tel"
+   725→                placeholder="(555) 123-4567"
+   726→                value={formData.phone}
+   727→                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+   728→              />
+   729→            </div>
+   730→            <div className="grid gap-2">
+   731→              <Label htmlFor="contact-message">Message *</Label>
+   732→              <Textarea
+   733→                id="contact-message"
+   734→                placeholder="Tell Marcus what's on your mind — inquiries about work, commissions, exhibitions, or anything else..."
+   735→                value={formData.message}
+   736→                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+   737→                rows={5}
+   738→                required
+   739→              />
+   740→            </div>
+   741→            <Button type="submit" size="lg" className="w-full" disabled={loading}>
+   742→              {loading && <Loader2 className="size-4 animate-spin mr-2" />}
+   743→              Send Message
+   744→              <ChevronRight className="size-4 ml-1" />
+   745→            </Button>
+   746→          </motion.form>
+   747→
+   748→          <motion.div variants={fadeUp} custom={1} className="mt-8 text-center space-y-3">
+   749→            <Separator />
+   750→            <div className="flex items-center justify-center gap-6 pt-4">
+   751→              <a
+   752→                href="mailto:marcuscarternyc@protonmail.com"
+   753→                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+   754→              >
+   755→                <Mail className="size-4" />
+   756→                marcuscarternyc@protonmail.com
+   757→              </a>
+   758→              <a
+   759→                href="https://instagram.com/eastvillagenyc"
+   760→                target="_blank"
+   761→                rel="noopener noreferrer"
+   762→                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+   763→              >
+   764→                <Instagram className="size-4" />
+   765→                @eastvillagenyc
+   766→              </a>
+   767→            </div>
+   768→          </motion.div>
+   769→        </motion.div>
+   770→      </div>
+   771→    </section>
+   772→  )
+   773→}
+   774→
+   775→/* ──────────── Footer ──────────── */
+   776→function Footer() {
+   777→  return (
+   778→    <footer className="bg-zinc-950 text-white/70 py-12">
+   779→      <div className="max-w-6xl mx-auto px-6">
+   780→        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+   781→          <div>
+   782→            <h3
+   783→              className="text-white text-lg font-semibold"
+   784→              style={{ fontFamily: 'var(--font-playfair), serif' }}
+   785→            >
+   786→              Marcus Carter
+   787→            </h3>
+   788→            <p className="text-xs mt-1">Abstract Artist &middot; East Village, NYC</p>
+   789→          </div>
+   790→          <div className="flex items-center gap-6">
+   791→            <a
+   792→              href="mailto:marcuscarternyc@protonmail.com"
+   793→              className="text-sm hover:text-white transition-colors"
+   794→              aria-label="Email"
+   795→            >
+   796→              <Mail className="size-4" />
+   797→            </a>
+   798→            <a
+   799→              href="https://instagram.com/eastvillagenyc"
+   800→              target="_blank"
+   801→              rel="noopener noreferrer"
+   802→              className="text-sm hover:text-white transition-colors"
+   803→              aria-label="Instagram"
+   804→            >
+   805→              <Instagram className="size-4" />
+   806→            </a>
+   807→          </div>
+   808→        </div>
+   809→        <Separator className="my-6 bg-white/10" />
+   810→        <p className="text-xs text-center">
+   811→          &copy; {new Date().getFullYear()} Marcus Carter. All rights reserved. All artwork images are copyrighted.
+   812→        </p>
+   813→      </div>
+   814→    </footer>
+   815→  )
+   816→}
+   817→
+   818→/* ──────────── Back to Top ──────────── */
+   819→function BackToTop() {
+   820→  const [show, setShow] = useState(false)
+   821→
+   822→  useEffect(() => {
+   823→    const onScroll = () => setShow(window.scrollY > 600)
+   824→    window.addEventListener('scroll', onScroll, { passive: true })
+   825→    return () => window.removeEventListener('scroll', onScroll)
+   826→  }, [])
+   827→
+   828→  return (
+   829→    <AnimatePresence>
+   830→      {show && (
+   831→        <motion.button
+   832→          initial={{ opacity: 0, scale: 0.8 }}
+   833→          animate={{ opacity: 1, scale: 1 }}
+   834→          exit={{ opacity: 0, scale: 0.8 }}
+   835→          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+   836→          className="fixed bottom-6 right-6 z-40 bg-black text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-black/80 transition-colors"
+   837→          aria-label="Back to top"
+   838→        >
+   839→          <ArrowUp className="size-4" />
+   840→        </motion.button>
+   841→      )}
+   842→    </AnimatePresence>
+   843→  )
+   844→}
+   845→
+   846→/* ──────────── Main Page ──────────── */
+   847→export default function Home() {
+   848→  const navigateTo = useCallback((id: string) => {
+   849→    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+   850→  }, [])
+   851→
+   852→  return (
+   853→    <div className="min-h-screen flex flex-col bg-white">
+   854→      <Navbar onNavigate={navigateTo} />
+   855→      <main className="flex-1">
+   856→        <HeroSection onNavigate={navigateTo} />
+   857→        <AboutSection />
+   858→        <GallerySection />
+   859→        <ContactSection />
+   860→      </main>
+   861→      <Footer />
+   862→      <BackToTop />
+   863→    </div>
+   864→  )
+   865→}
