@@ -19,7 +19,6 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import {
-  Instagram,
   Mail,
   Menu,
   X,
@@ -30,6 +29,7 @@ import {
   ArrowUp,
 } from 'lucide-react'
 
+import { SiInstagram } from '@icons-pack/react-simple-icons'
 import { Variants } from "framer-motion";
 
 /* ──────────── Types ──────────── */
@@ -141,7 +141,7 @@ function Navbar({ onNavigate }: { onNavigate: (id: string) => void }) {
             className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Instagram"
           >
-            <Instagram className="size-4" />
+            <SiInstagram className="size-4" />
           </a>
         </div>
 
@@ -183,7 +183,7 @@ function Navbar({ onNavigate }: { onNavigate: (id: string) => void }) {
                 rel="noopener noreferrer"
                 className="text-sm text-muted-foreground hover:text-foreground py-1 flex items-center gap-2"
               >
-                <Instagram className="size-4" /> @eastvillagenyc
+                <SiInstagram className="size-4" /> @eastvillagenyc
               </a>
             </div>
           </motion.div>
@@ -358,7 +358,7 @@ function AboutSection() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Instagram className="size-4" />
+              <SiInstagram className="size-4" />
               @eastvillagenyc
             </a>
           </motion.div>
@@ -763,7 +763,7 @@ function ContactSection() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                <Instagram className="size-4" />
+                <SiInstagram className="size-4" />
                 @eastvillagenyc
               </a>
             </div>
@@ -804,7 +804,7 @@ function Footer() {
               className="text-sm hover:text-white transition-colors"
               aria-label="Instagram"
             >
-              <Instagram className="size-4" />
+              <SiInstagram className="size-4" />
             </a>
           </div>
         </div>

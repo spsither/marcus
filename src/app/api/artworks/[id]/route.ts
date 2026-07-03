@@ -47,3 +47,28 @@ export async function PUT(
     )
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const existing = await db.artwork.findUnique({ where: { id } })
+    if (!existing) {
+      return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
+    }
+
+    // Delete related purchase inquiries first
+    await db.purchaseInquiry.deleteMany({ where: { artworkId: id } })
+    await db.artwork.delete({ where: { id } })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Artwork deletion error:', error)
+    return NextResponse.json(
+      { error: 'Something went wrong' },
+      { status: 500 }
+    )
+  }
+}
