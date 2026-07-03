@@ -102,16 +102,16 @@ function AdminDashboard() {
   const fetchArtworks = useCallback(async () => { const r = await fetch('/api/artworks'); const d = await r.json(); return d.artworks as Artwork[] }, [])
   useEffect(() => { fetchArtworks().then(setArtworks).finally(() => setLoading(false)) }, [fetchArtworks])
   const handleUpdate = (id: string, c: Partial<Artwork>) => setArtworks(prev => prev.map(a => a.id === id ? { ...a, ...c } : a))
-  const avail = artworks.filter(a => a.isAvailable)
+  const avail = artworks?.filter(a => a.isAvailable)
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100">
       <header className="sticky top-0 z-50 bg-stone-950/80 backdrop-blur border-b border-stone-800"><div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between"><div className="flex items-center gap-3"><a href="/" className="p-2 rounded-lg hover:bg-stone-800 text-stone-400 hover:text-stone-200 cursor-pointer"><ArrowLeft className="w-5 h-5" /></a><div><h1 className="text-lg font-semibold font-[family-name:var(--font-playfair)]">Admin Dashboard</h1><p className="text-xs text-stone-500">Marcus Carter Portfolio</p></div></div><a href="/" target="_blank" className="flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300"><ExternalLink className="w-3.5 h-3.5" />View Site</a></div></header>
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          <Card className="border-stone-800 bg-stone-900/50"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-amber-400">{artworks.length}</p><p className="text-xs text-stone-500 mt-1">Total Artworks</p></CardContent></Card>
-          <Card className="border-stone-800 bg-stone-900/50"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-emerald-400">{avail.length}</p><p className="text-xs text-stone-500 mt-1">Available</p></CardContent></Card>
-          <Card className="border-stone-800 bg-stone-900/50"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-stone-300">{artworks.length - avail.length}</p><p className="text-xs text-stone-500 mt-1">Sold</p></CardContent></Card>
-          <Card className="border-stone-800 bg-stone-900/50"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-stone-100">{fmt(avail.reduce((s, a) => s + a.price, 0))}</p><p className="text-xs text-stone-500 mt-1">Portfolio Value</p></CardContent></Card>
+          <Card className="border-stone-800 bg-stone-900/50"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-amber-400">{artworks?.length}</p><p className="text-xs text-stone-500 mt-1">Total Artworks</p></CardContent></Card>
+          <Card className="border-stone-800 bg-stone-900/50"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-emerald-400">{avail?.length}</p><p className="text-xs text-stone-500 mt-1">Available</p></CardContent></Card>
+          <Card className="border-stone-800 bg-stone-900/50"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-stone-300">{artworks?.length - avail?.length}</p><p className="text-xs text-stone-500 mt-1">Sold</p></CardContent></Card>
+          <Card className="border-stone-800 bg-stone-900/50"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-stone-100">{fmt(avail?.reduce((s, a) => s + a.price, 0))}</p><p className="text-xs text-stone-500 mt-1">Portfolio Value</p></CardContent></Card>
         </div>
         <Tabs defaultValue="artworks" className="w-full">
           <TabsList className="bg-stone-900 border border-stone-800 w-full sm:w-auto">
@@ -119,7 +119,7 @@ function AdminDashboard() {
             <TabsTrigger value="inquiries" className="data-[state=active]:bg-stone-800 gap-1.5 cursor-pointer"><ShoppingBag className="w-4 h-4" />Inquiries</TabsTrigger>
             <TabsTrigger value="contacts" className="data-[state=active]:bg-stone-800 gap-1.5 cursor-pointer"><Mail className="w-4 h-4" />Messages</TabsTrigger>
           </TabsList>
-          <TabsContent value="artworks" className="mt-6">{loading ? <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></div> : <div className="space-y-2"><p className="text-sm text-stone-400 mb-4">Click a price to edit. Toggle for sold/available. Arrows to reorder.</p>{artworks.map(a => <ArtworkRow key={a.id} artwork={a} onUpdate={handleUpdate} />)}</div>}</TabsContent>
+          <TabsContent value="artworks" className="mt-6">{loading ? <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></div> : <div className="space-y-2"><p className="text-sm text-stone-400 mb-4">Click a price to edit. Toggle for sold/available. Arrows to reorder.</p>{artworks?.map(a => <ArtworkRow key={a.id} artwork={a} onUpdate={handleUpdate} />)}</div>}</TabsContent>
           <TabsContent value="inquiries" className="mt-6"><InquiriesTab /></TabsContent>
           <TabsContent value="contacts" className="mt-6"><ContactsTab /></TabsContent>
         </Tabs>
