@@ -30,6 +30,8 @@ import {
   ArrowUp,
 } from 'lucide-react'
 
+import { Variants } from "framer-motion";
+
 /* ──────────── Types ──────────── */
 interface Artwork {
   id: string
@@ -44,14 +46,14 @@ interface Artwork {
 }
 
 /* ──────────── Animation helpers ──────────── */
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.1, duration: 0.6, ease: 'easeOut' },
+    transition: { delay: i * 0.1, duration: 0.6, ease: 'easeOut' } as const,
   }),
-}
+};
 
 const stagger = {
   visible: { transition: { staggerChildren: 0.08 } },
@@ -606,7 +608,7 @@ function GallerySection() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {artworks.map((artwork, i) => (
+            {artworks?.map((artwork, i) => (
               <ArtworkCard
                 key={artwork.id}
                 artwork={artwork}
