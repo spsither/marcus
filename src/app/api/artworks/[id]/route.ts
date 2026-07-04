@@ -1,4 +1,4 @@
-import { db } from '@/lib/db'
+import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -14,26 +14,36 @@ const updateSchema = z.object({
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params
+    const { id } = params
     const body = await request.json()
+
     const result = updateSchema.safeParse(body)
 
     if (!result.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: result.error.flatten().fieldErrors },
+        {
+          error: 'Invalid input',
+          details: result.error.flatten().fieldErrors,
+        },
         { status: 400 }
       )
     }
 
-    const existing = await db.artwork.findUnique({ where: { id } })
+    const existing = await prisma.artwork.findUnique({
+      where: { id },
+    })
+
     if (!existing) {
-      return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Artwork not found' },
+        { status: 404 }
+      )
     }
 
-    const updated = await db.artwork.update({
+    const updated = await prisma.artwork.update({
       where: { id },
       data: result.data,
     })
@@ -50,18 +60,29 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params
-    const existing = await db.artwork.findUnique({ where: { id } })
+    const { id } = params
+
+    const existing = await prisma.artwork.findUnique({
+      where: { id },
+    })
+
     if (!existing) {
-      return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Artwork not found' },
+        { status: 404 }
+      )
     }
 
-    // Delete related purchase inquiries first
-    await db.purchaseInquiry.deleteMany({ where: { artworkId: id } })
-    await db.artwork.delete({ where: { id } })
+    await prisma.purchaseInquiry.deleteMany({
+      where: { artworkId: id },
+    })
+
+    await prisma.artwork.delete({
+      where: { id },
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

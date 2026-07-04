@@ -1,4 +1,4 @@
-import { db } from '@/lib/db'
+import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const { name, email, phone, artworkId, message } = result.data
 
     // Verify the artwork exists and is available
-    const artwork = await db.artwork.findUnique({
+    const artwork = await prisma.artwork.findUnique({
       where: { id: artworkId },
     })
 
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       )
     }
 
-    await db.purchaseInquiry.create({
+    await prisma.purchaseInquiry.create({
       data: {
         name,
         email,

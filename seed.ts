@@ -1,10 +1,11 @@
-import { db } from './src/lib/db'
+import "dotenv/config";
+import { prisma } from "./src/lib/db";
 
 async function seed() {
-  // First, delete all existing artworks to do a clean re-seed
-  await db.purchaseInquiry.deleteMany()
-  await db.artwork.deleteMany()
-  console.log('Cleared existing artworks and inquiries.')
+  await prisma.purchaseInquiry.deleteMany();
+  await prisma.artwork.deleteMany();
+
+  console.log("Cleared existing artworks and inquiries.");
 
   const artworks = [
     {
@@ -305,24 +306,28 @@ async function seed() {
       sortOrder: 27,
     },
   ]
+console.log("Seeding artworks...");
 
-  console.log('Seeding artworks...')
   for (const artwork of artworks) {
-    const created = await db.artwork.upsert({
+    const created = await prisma.artwork.upsert({
       where: { id: artwork.id },
       update: artwork,
       create: artwork,
-    })
-    console.log(`  ${created.isAvailable ? '✓' : '✗ SOLD'} ${created.title} — ${created.medium}, ${created.dimensions}`)
+    });
+
+    console.log(
+      `  ${created.isAvailable ? "✓" : "✗ SOLD"} ${created.title}`
+    );
   }
-  console.log(`\nDone! Seeded ${artworks.length} artworks (${artworks.filter(a => a.isAvailable).length} available, ${artworks.filter(a => !a.isAvailable).length} sold).`)
+
+  console.log(`Done! Seeded ${artworks.length} artworks.`);
 }
 
 seed()
   .catch((e) => {
-    console.error(e)
-    process.exit(1)
+    console.error(e);
+    process.exit(1);
   })
-  .finally(() => {
-    void db.$disconnect()
-  })
+  .finally(async () => {
+  await prisma.$disconnect();
+});

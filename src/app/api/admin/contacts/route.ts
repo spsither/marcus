@@ -1,9 +1,9 @@
-import { db } from '@/lib/db'
+import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const contacts = await db.contactSubmission.findMany({
+    const contacts = await prisma.contactSubmission.findMany({
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json({ contacts })

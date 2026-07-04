@@ -250,7 +250,7 @@ function HeroSection({ onNavigate }: { onNavigate: (id: string) => void }) {
             size="lg"
             variant="outline"
             onClick={() => onNavigate('contact')}
-            className="border-white/40 text-white hover:bg-white/10 text-base px-8"
+            className="bg-white text-black hover:bg-white/90 text-base px-8"
           >
             Get in Touch
           </Button>

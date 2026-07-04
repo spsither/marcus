@@ -1,4 +1,4 @@
-import { db } from '@/lib/db'
+import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -23,16 +23,25 @@ export async function POST(request: Request) {
 
     const { name, email, phone, message } = result.data
 
-    await db.contactSubmission.create({
-      data: { name, email, phone: phone || null, message },
+    await prisma.contactSubmission.create({
+      data: {
+        name,
+        email,
+        phone: phone || null,
+        message,
+      },
     })
 
     return NextResponse.json(
-      { success: true, message: 'Thank you for reaching out! Marcus will be in touch soon.' },
+      {
+        success: true,
+        message: 'Thank you for reaching out! Marcus will be in touch soon.',
+      },
       { status: 201 }
     )
   } catch (error) {
     console.error('Contact form error:', error)
+
     return NextResponse.json(
       { error: 'Something went wrong. Please try again.' },
       { status: 500 }

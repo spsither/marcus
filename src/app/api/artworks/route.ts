@@ -1,4 +1,4 @@
-import { db } from '@/lib/db'
+import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -24,14 +24,15 @@ export async function POST(request: Request) {
       )
     }
 
-    // Get the highest sortOrder to append at the end
-    const maxSort = await db.artwork.findFirst({
+    // Get highest sortOrder
+    const maxSort = await prisma.artwork.findFirst({
       orderBy: { sortOrder: 'desc' },
       select: { sortOrder: true },
     })
 
     const { description, isAvailable, ...rest } = result.data
-    const artwork = await db.artwork.create({
+
+    const artwork = await prisma.artwork.create({
       data: {
         ...rest,
         description: description ?? null,
@@ -42,7 +43,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ artwork }, { status: 201 })
   } catch (error) {
-    console.error('Artwork creation error:', error instanceof Error ? error.message : error)
+    console.error(
+      'Artwork creation error:',
+      error instanceof Error ? error.message : error
+    )
+
     return NextResponse.json(
       { error: 'Something went wrong' },
       { status: 500 }
@@ -52,12 +57,14 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const artworks = await db.artwork.findMany({
+    const artworks = await prisma.artwork.findMany({
       orderBy: { sortOrder: 'asc' },
     })
+
     return NextResponse.json({ artworks })
   } catch (error) {
     console.error('Failed to fetch artworks:', error)
+
     return NextResponse.json(
       { error: 'Failed to fetch artworks' },
       { status: 500 }
