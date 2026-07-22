@@ -6,8 +6,9 @@ const updateSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().nullable().optional(),
   price: z.number().min(0).optional(),
-  medium: z.string().optional(),
-  dimensions: z.string().optional(),
+  medium: z.string().min(1).optional(),
+  dimensions: z.string().min(1).optional(),
+  imageUrl: z.string().url().optional(),
   isAvailable: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
 })

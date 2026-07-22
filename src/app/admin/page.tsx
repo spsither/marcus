@@ -58,14 +58,80 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
 
 function ArtworkRow({ artwork, onUpdate, onDelete }: { artwork: Artwork; onUpdate: (id: string, data: Partial<Artwork>) => void; onDelete: (id: string) => void }) {
   const [editing, setEditing] = useState(false)
-  const [price, setPrice] = useState(String(artwork.price))
+  const [form, setForm] = useState({
+    title: artwork.title,
+    description: artwork.description ?? '',
+    price: String(artwork.price),
+    medium: artwork.medium,
+    dimensions: artwork.dimensions,
+    imageUrl: artwork.imageUrl,
+  })
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  const updateField = (
+    field: keyof typeof form,
+    value: string
+  ) => {
+    setForm(prev => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
+
   const handleSave = async () => {
-    const p = parseFloat(price)
-    if (isNaN(p) || p < 0) { toast({ title: 'Invalid price', variant: 'destructive' }); return }
+    const price = parseFloat(form.price)
+
+    if (isNaN(price) || price < 0) {
+      toast({
+        title: 'Invalid price',
+        variant: 'destructive',
+      })
+      return
+    }
+
     setSaving(true)
-    try { const res = await fetch(`/api/artworks/${artwork.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ price: p }) }); if (res.ok) { onUpdate(artwork.id, { price: p }); setEditing(false); toast({ title: 'Price updated' }) } } catch { toast({ title: 'Error', variant: 'destructive' }) } finally { setSaving(false) }
+
+    try {
+      const payload = {
+        title: form.title.trim(),
+        description: form.description.trim() || null,
+        price,
+        medium: form.medium.trim(),
+        dimensions: form.dimensions.trim(),
+        imageUrl: form.imageUrl.trim(),
+      }
+
+      const res = await fetch(`/api/artworks/${artwork.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (res.ok) {
+        onUpdate(artwork.id, payload)
+
+        toast({
+          title: 'Artwork updated',
+        })
+
+        setEditing(false)
+      } else {
+        toast({
+          title: 'Update failed',
+          variant: 'destructive',
+        })
+      }
+    } catch {
+      toast({
+        title: 'Error',
+        variant: 'destructive',
+      })
+    } finally {
+      setSaving(false)
+    }
   }
   const handleToggle = async () => { const v = !artwork.isAvailable; try { const res = await fetch(`/api/artworks/${artwork.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isAvailable: v }) }); if (res.ok) { onUpdate(artwork.id, { isAvailable: v }); toast({ title: v ? 'Available' : 'Sold' }) } } catch { toast({ title: 'Error', variant: 'destructive' }) } }
   const handleMove = async (dir: 'up' | 'down') => { const n = artwork.sortOrder + (dir === 'up' ? -1 : 1); if (n < 1) return; try { const res = await fetch(`/api/artworks/${artwork.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sortOrder: n }) }); if (res.ok) onUpdate(artwork.id, { sortOrder: n }) } catch { toast({ title: 'Error', variant: 'destructive' }) } }
@@ -82,7 +148,93 @@ function ArtworkRow({ artwork, onUpdate, onDelete }: { artwork: Artwork; onUpdat
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2"><h3 className="font-medium text-stone-100 truncate text-sm">{artwork.title}</h3><Badge variant="outline" className="text-[10px] border-stone-700 text-stone-400 flex-shrink-0">{artwork.medium}</Badge></div>
         <p className="text-xs text-stone-500 mt-0.5">{artwork.dimensions}</p>
-        {editing ? (<div className="flex items-center gap-2 mt-1.5"><div className="relative"><DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400" /><Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="h-7 w-28 pl-6 text-sm bg-stone-800 border-stone-600 text-stone-100" min="0" step="50" autoFocus onKeyDown={(e) => e.key === 'Enter' && handleSave()} /></div><Button size="sm" onClick={handleSave} disabled={saving} className="h-7 px-2 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">{saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}</Button><Button size="sm" variant="ghost" onClick={() => { setEditing(false); setPrice(String(artwork.price)) }} className="h-7 px-2 text-stone-400 hover:text-stone-200 cursor-pointer">Cancel</Button></div>) : (<button onClick={() => setEditing(true)} className="text-amber-400 font-semibold text-sm mt-1 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1">{fmt(artwork.price)}<span className="text-stone-500 text-[10px]">(click to edit)</span></button>)}
+        {editing ? (
+          <div className="space-y-3 mt-3">
+
+            <Input
+              value={form.title}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Title"
+            />
+
+            <Textarea
+              value={form.description}
+              onChange={(e) =>
+                updateField('description', e.target.value)
+              }
+              placeholder="Description"
+              rows={3}
+            />
+
+            <Input
+              value={form.medium}
+              onChange={(e) =>
+                updateField('medium', e.target.value)
+              }
+              placeholder="Medium"
+            />
+
+            <Input
+              value={form.dimensions}
+              onChange={(e) =>
+                updateField('dimensions', e.target.value)
+              }
+              placeholder="Dimensions"
+            />
+
+            <Input
+              value={form.imageUrl}
+              onChange={(e) =>
+                updateField('imageUrl', e.target.value)
+              }
+              placeholder="Image URL"
+            />
+
+            <Input
+              type="number"
+              value={form.price}
+              onChange={(e) =>
+                updateField('price', e.target.value)
+              }
+              placeholder="Price"
+            />
+
+            <div className="flex gap-2">
+
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Save'
+                )}
+              </Button>
+
+              <Button
+                size="sm"
+                onClick={() => {
+                  setEditing(false)
+
+                  setForm({
+                    title: artwork.title,
+                    description: artwork.description ?? '',
+                    price: String(artwork.price),
+                    medium: artwork.medium,
+                    dimensions: artwork.dimensions,
+                    imageUrl: artwork.imageUrl,
+                  })
+                }}
+              >
+                Cancel
+              </Button>
+
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setEditing(true)} className="text-amber-400 font-semibold text-sm mt-1 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1">{fmt(artwork.price)}<span className="text-stone-500 text-[10px]">(click to edit)</span></button>)}
       </div>
       <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
         <div className="flex items-center gap-0.5"><button onClick={() => handleMove('up')} className="p-1 rounded hover:bg-stone-700 text-stone-400 hover:text-stone-200 cursor-pointer"><ChevronUp className="w-3.5 h-3.5" /></button><button onClick={() => handleMove('down')} className="p-1 rounded hover:bg-stone-700 text-stone-400 hover:text-stone-200 cursor-pointer"><ChevronDown className="w-3.5 h-3.5" /></button></div>
