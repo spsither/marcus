@@ -234,7 +234,19 @@ function ArtworkRow({ artwork, onUpdate, onDelete }: { artwork: Artwork; onUpdat
             </div>
           </div>
         ) : (
-          <button onClick={() => setEditing(true)} className="text-amber-400 font-semibold text-sm mt-1 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1">{fmt(artwork.price)}<span className="text-stone-500 text-[10px]">(click to edit)</span></button>)}
+          <div className="mt-1 flex items-center gap-2">
+            <span className="text-sm font-semibold text-amber-400">
+              {fmt(artwork.price)}
+            </span>
+            <button
+              onClick={() => setEditing(true)}
+              className="rounded-md border border-stone-700 bg-stone-800/60 px-2 py-0.5 text-[11px] font-medium text-stone-300 transition-colors hover:border-amber-400/50 hover:bg-stone-800 hover:text-amber-300 active:scale-95 cursor-pointer"
+            >
+              Edit
+            </button>
+          </div>
+
+        )}
       </div>
       <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
         <div className="flex items-center gap-0.5"><button onClick={() => handleMove('up')} className="p-1 rounded hover:bg-stone-700 text-stone-400 hover:text-stone-200 cursor-pointer"><ChevronUp className="w-3.5 h-3.5" /></button><button onClick={() => handleMove('down')} className="p-1 rounded hover:bg-stone-700 text-stone-400 hover:text-stone-200 cursor-pointer"><ChevronDown className="w-3.5 h-3.5" /></button></div>
