@@ -108,11 +108,10 @@ function Navbar({ onNavigate }: { onNavigate: (id: string) => void }) {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-white/80 backdrop-blur-lg border-b shadow-sm'
-          : 'bg-transparent'
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+        ? 'bg-white/80 backdrop-blur-lg border-b shadow-sm'
+        : 'bg-transparent'
+        }`}
     >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <button
@@ -398,24 +397,24 @@ function ArtworkCard({
           className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
         />
+
+        {/* Hover Overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileHover={{ opacity: 1, scale: 1 }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          >
-            <span className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2">
+          <div className="opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300">
+            <span className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 shadow-md">
               <ShoppingBag className="size-4" />
               {artwork.isAvailable ? 'View Details' : 'Sold'}
             </span>
-          </motion.div>
+          </div>
         </div>
+
         {!artwork.isAvailable && (
           <Badge variant="secondary" className="absolute top-3 left-3 bg-black/70 text-white border-0">
             Sold
           </Badge>
         )}
       </div>
+
       <h3
         className="font-semibold text-base mb-1 group-hover:underline underline-offset-4"
         style={{ fontFamily: 'var(--font-playfair), serif' }}
@@ -500,21 +499,39 @@ function PurchaseDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-lg overflow-hidden aspect-video bg-muted mb-2">
-          <img
-            src={artwork.imageUrl}
-            alt={artwork.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="flex gap-4 text-xs text-muted-foreground">
-          <span>{artwork.medium}</span>
-          <span>&middot;</span>
-          <span>{artwork.dimensions}</span>
+        {/* Artwork Section Container */}
+        <div className="space-y-3">
+          {/* Clickable Image Wrapper */}
+          <a
+            href={artwork.imageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Click to view full image in a new tab"
+            className="group block rounded-lg overflow-hidden aspect-video bg-muted w-full relative cursor-pointer"
+          >
+            <img
+              src={artwork.imageUrl}
+              alt={artwork.title}
+              className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+            />
+          </a>
+
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            <span>{artwork.medium}</span>
+            <span>&middot;</span>
+            <span>{artwork.dimensions}</span>
+          </div>
+
+          {artwork.description && (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {artwork.description}
+            </p>
+          )}
         </div>
 
-        <Separator className="my-2" />
+        <Separator />
 
+        {/* Inquiry Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-2">
             <Label htmlFor="inquiry-name">Name *</Label>
@@ -571,7 +588,6 @@ function PurchaseDialog({
     </Dialog>
   )
 }
-
 function GallerySection() {
   const [artworks, setArtworks] = useState<Artwork[]>([])
   const [loading, setLoading] = useState(true)
