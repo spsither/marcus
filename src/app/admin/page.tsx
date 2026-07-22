@@ -305,9 +305,24 @@ function AdminDashboard() {
         <Tabs defaultValue="artworks" className="w-full">
           <div className="flex items-center justify-between mb-4">
             <TabsList className="bg-stone-900 border border-stone-800 w-full sm:w-auto">
-              <TabsTrigger value="artworks" className="data-[state=active]:bg-stone-800 gap-1.5 cursor-pointer"><Palette className="w-4 h-4" />Artworks</TabsTrigger>
-              <TabsTrigger value="inquiries" className="data-[state=active]:bg-stone-800 gap-1.5 cursor-pointer"><ShoppingBag className="w-4 h-4" />Inquiries</TabsTrigger>
-              <TabsTrigger value="contacts" className="data-[state=active]:bg-stone-800 gap-1.5 cursor-pointer"><Mail className="w-4 h-4" />Messages</TabsTrigger>
+              <TabsTrigger
+                value="artworks"
+                className="text-stone-400 data-[state=active]:bg-stone-800 data-[state=active]:text-stone-100 gap-1.5 cursor-pointer"
+              >
+                <Palette className="w-4 h-4" />Artworks
+              </TabsTrigger>
+              <TabsTrigger
+                value="inquiries"
+                className="text-stone-400 data-[state=active]:bg-stone-800 data-[state=active]:text-stone-100 gap-1.5 cursor-pointer"
+              >
+                <ShoppingBag className="w-4 h-4" />Inquiries
+              </TabsTrigger>
+              <TabsTrigger
+                value="contacts"
+                className="text-stone-400 data-[state=active]:bg-stone-800 data-[state=active]:text-stone-100 gap-1.5 cursor-pointer"
+              >
+                <Mail className="w-4 h-4" />Messages
+              </TabsTrigger>
             </TabsList>
           </div>
           <TabsContent value="artworks" className="mt-2">
